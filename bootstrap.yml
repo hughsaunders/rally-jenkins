@@ -57,8 +57,8 @@
       command: "{{knife_command}} cookbook upload -o chef-cookbooks/cookbooks -a"
     - name: Upload roles
       shell: "{{knife_command}} role from_file chef-cookbooks/roles/*.rb"
-    - name: Copy environment file
-      copy: src=havana.json dest={{ansible_env.HOME}}/havana.json
+    - name: Generate chef environment from template
+      template: src=havana.json.j2 dest={{ansible_env.HOME}}/havana.json
     - name: Upload environment
       shell: "{{knife_command}} environment from_file havana.json"
     - name: Get node list
@@ -111,11 +111,10 @@
 - name: Add ceph-mon role
   hosts: chef
   tasks:
-    - command: "{{knife_command}} node run_list add {{item}} role[ceph-mon]"
-      with_items: groups.ceph
+    - command: "{{knife_command}} node run_list add {{groups.ceph[0]}} role[ceph-mon]"
 
 - name: Run chef-client
-  hosts: ceph
+  hosts: ceph[0]
   tasks:
     - command: chef-client
   
@@ -124,11 +123,9 @@
   tasks:
     - command: "{{knife_command}} node run_list add {{item}} role[ceph-osd]"
       with_items: groups.ceph
-    - name: Wait for Solr cache (cache update required from ceph-mon run for ceph-osd run)
-      #shell: "{{knife_command}} search node \"role:ceph-mon AND ceph_bootstrap_osd_key:*\""
+    - name: Wait for Solr cache
       command: "{{knife_command}} exec -E \"nodes.search('role:ceph-mon AND ceph_bootstrap_osd_key:*') {|n| puts n.name}\""
       register: output
-      #until: "'0 items found' not in output.stderr" 
       until: output.stdout != ""
       retries: 10
       delay: 10

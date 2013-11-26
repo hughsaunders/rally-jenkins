@@ -1,8 +1,10 @@
 [chef]
 jenkins-chef
+jenkins-chef
 
 [ceph]
-jenkins-ceph
+jenkins-ceph-1
+jenkins-ceph-2
 
 [openstack]
 jenkins-openstack

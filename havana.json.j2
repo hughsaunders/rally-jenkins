@@ -81,7 +81,7 @@
           "repo_url": "http://eu.ceph.com",
           "config": {
             "fsid": "5bc3130e-4edc-4556-aad4-7838ddeaee36",
-            "mon_initial_members": "jenkins-ceph"
+            "mon_initial_members": "{{groups.ceph[0]}}"
           }
         }
     }
