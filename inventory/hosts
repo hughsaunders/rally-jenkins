@@ -1,0 +1,17 @@
+[chef]
+jenkins-chef
+
+[ceph]
+jenkins-ceph
+
+[openstack]
+jenkins-openstack
+
+[all:children]
+chef
+ceph
+openstack
+
+[cluster:children]
+ceph
+openstack

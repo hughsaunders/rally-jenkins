@@ -1,0 +1,88 @@
+{
+    "name": "havana",
+    "description": "OpenStack Havana",
+    "cookbook_versions": {
+    },
+    "json_class": "Chef::Environment",
+    "chef_type": "environment",
+    "default_attributes": {
+    },
+    "override_attributes": {
+        "openssh": {
+            "server": {
+                "subsystem": "sftp /usr/lib/openssh/sftp-server"
+            }
+        },
+        "monitoring": {
+            "procmon_provider": "monit"
+        },
+        "cinder": {
+          "storage": {
+            "rbd": {
+              "rbd_secret_uuid": "ec8cae63-ac2a-4952-bc4a-81086b462a24"
+            },
+            "provider": "rbd"
+          }
+        },
+        "glance": {
+            "image_upload": true,
+            "api": {
+              "default_store": "rbd"
+            },
+            "images": [
+                "cirros"
+            ]
+        },
+        "nova": {
+            "libvirt": {
+                "virt_type": "qemu"
+            }
+        },
+        "vips": {
+          "config": {
+            "192.168.0.100": {
+              "vrid": 100,
+              "network": "public"
+            },
+            "192.168.0.101": {
+              "vrid": 101,
+              "network": "public"
+            },
+            "192.168.0.102": {
+              "vrid": 102,
+              "network": "public"
+            }
+          },
+          "nova-api": "192.168.0.100",
+          "nova-xvpvnc-proxy": "192.168.0.100",
+          "rabbitmq-queue": "192.168.0.101",
+          "keystone-service-api": "192.168.0.100",
+          "mysql-db": "192.168.0.102",
+          "keystone-admin-api": "192.168.0.100",
+          "nova-novnc-proxy": "192.168.0.100",
+          "glance-registry": "192.168.0.100",
+          "glance-api": "192.168.0.100",
+          "nova-ec2-public": "192.168.0.100",
+          "keystone-internal-api": "192.168.0.100"
+        },
+        "mysql": {
+            "allow_remote_root": true,
+            "root_network_acl": "%"
+        },
+        "osops_networks": {
+          "nova": "192.168.0.0/24",
+          "public": "192.168.0.0/24",
+          "management": "192.168.0.0/24"
+        },
+        "ceph": {
+          "monitor_secret": "AQASt4BSQIphGhAAKEtwyaQr6sI01C1VO8oh2Q==",
+          "install_debug": false,
+          "install_method": "chef",
+          "repo_url": "http://eu.ceph.com",
+          "config": {
+            "fsid": "5bc3130e-4edc-4556-aad4-7838ddeaee36",
+            "mon_initial_members": "jenkins-ceph"
+          }
+        }
+    }
+}
