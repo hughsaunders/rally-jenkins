@@ -10,14 +10,14 @@
         name: "{{inventory_hostname}}"
         flavor: performance1-2
         image: "{{image_id}}"
-        keypair: junk
+        keypair: "{{keypair}}"
         disk_config: manual
         wait: yes
         state: present
         networks:
           - private
           - public
-          - roush
+          - "{{network}}"
       register: rax
     - name: Store host access IPs
       set_fact: ansible_ssh_host={{item.accessIPv4}}
@@ -124,6 +124,15 @@
   tasks:
     - command: "{{knife_command}} node run_list add {{item}} role[ceph-osd]"
       with_items: groups.ceph
+    - name: Wait for Solr cache (cache update required from ceph-mon run for ceph-osd run)
+      #shell: "{{knife_command}} search node \"role:ceph-mon AND ceph_bootstrap_osd_key:*\""
+      command: "{{knife_command}} exec -E \"nodes.search('role:ceph-mon AND ceph_bootstrap_osd_key:*') {|n| puts n.name}\""
+      register: output
+      #until: "'0 items found' not in output.stderr" 
+      until: output.stdout != ""
+      retries: 10
+      delay: 10
+      changed_when: output.stdout != ""
 
 - name: Finish ceph deploy
   hosts: ceph
@@ -133,10 +142,10 @@
     - name: Run ceph-disk-active
       command: /usr/sbin/ceph-disk-activate /dev/xvde1
 
-- name: Add single-controller, single-compute role
+- name: Add single-controller, cinder-volume, single-compute role
   hosts: chef
   tasks:
-    - command: "{{knife_command}} node run_list add {{item}} role[single-controller],role[single-compute]"
+    - command: "{{knife_command}} node run_list add {{item}} role[single-controller],role[cinder-volume],role[single-compute]"
       with_items: groups.openstack
 
 - name: Finish openstack deploy
