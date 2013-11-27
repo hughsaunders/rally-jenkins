@@ -40,39 +40,39 @@
         },
         "vips": {
           "config": {
-            "192.168.0.100": {
+            "{{network_prefix}}.100": {
               "vrid": 100,
               "network": "public"
             },
-            "192.168.0.101": {
+            "{{network_prefix}}.101": {
               "vrid": 101,
               "network": "public"
             },
-            "192.168.0.102": {
+            "{{network_prefix}}.102": {
               "vrid": 102,
               "network": "public"
             }
           },
-          "nova-api": "192.168.0.100",
-          "nova-xvpvnc-proxy": "192.168.0.100",
-          "rabbitmq-queue": "192.168.0.101",
-          "keystone-service-api": "192.168.0.100",
-          "mysql-db": "192.168.0.102",
-          "keystone-admin-api": "192.168.0.100",
-          "nova-novnc-proxy": "192.168.0.100",
-          "glance-registry": "192.168.0.100",
-          "glance-api": "192.168.0.100",
-          "nova-ec2-public": "192.168.0.100",
-          "keystone-internal-api": "192.168.0.100"
+          "nova-api": "{{network_prefix}}.100",
+          "nova-xvpvnc-proxy": "{{network_prefix}}.100",
+          "rabbitmq-queue": "{{network_prefix}}.101",
+          "keystone-service-api": "{{network_prefix}}.100",
+          "mysql-db": "{{network_prefix}}.102",
+          "keystone-admin-api": "{{network_prefix}}.100",
+          "nova-novnc-proxy": "{{network_prefix}}.100",
+          "glance-registry": "{{network_prefix}}.100",
+          "glance-api": "{{network_prefix}}.100",
+          "nova-ec2-public": "{{network_prefix}}.100",
+          "keystone-internal-api": "{{network_prefix}}.100"
         },
         "mysql": {
             "allow_remote_root": true,
             "root_network_acl": "%"
         },
         "osops_networks": {
-          "nova": "192.168.0.0/24",
-          "public": "192.168.0.0/24",
-          "management": "192.168.0.0/24"
+          "nova": "{{network_prefix}}.0/24",
+          "public": "{{network_prefix}}.0/24",
+          "management": "{{network_prefix}}.0/24"
         },
         "ceph": {
           "monitor_secret": "AQASt4BSQIphGhAAKEtwyaQr6sI01C1VO8oh2Q==",
