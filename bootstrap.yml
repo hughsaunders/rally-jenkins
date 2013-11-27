@@ -26,6 +26,31 @@
       with_items: rax.instances
 
 
+- name: Disable iptables
+  hosts: all
+  tasks:
+    - name: Clear ruleset
+      shell: "{{item}}-restore < /dev/null"
+      with_items:
+      - iptables
+      - ip6tables
+      when: ansible_os_family == "RedHat"
+
+    - name: Stop iptables
+      service: name={{item}} state=stopped enabled=no
+      with_items:
+      - iptables
+      - ip6tables
+      when: ansible_os_family == "RedHat"
+
+    - name: Save empty ruleset
+      shell: "{{item}}-save > /etc/sysconfig/{{item}}"
+      with_items:
+      - iptables
+      - ip6tables
+      when: ansible_os_family == "RedHat"
+
+
 - name: Install chef-server
   hosts: chef
   tasks:
@@ -41,15 +66,31 @@
 
     - name: Download chef server
       command: wget https://opscode-omnibus-packages.s3.amazonaws.com/ubuntu/12.04/x86_64/chef-server_11.0.8-1.ubuntu.12.04_amd64.deb chdir=/tmp creates=/tmp/chef-server_11.0.8-1.ubuntu.12.04_amd64.deb
+      when: ansible_os_family == "Debian"
+
+    - name: Download chef server
+      command: wget https://opscode-omnibus-packages.s3.amazonaws.com/el/6/x86_64/chef-server-11.0.4-1.el6.x86_64.rpm chdir=/tmp creates=/tmp/chef-server-11.0.4-1.el6.x86_64.rpm
+      when: ansible_os_family == "RedHat"
 
     - name: Check if chef server is installed
       command: dpkg -l chef-server
+      when: ansible_os_family == "Debian"
+      register: chef_installed
+      ignore_errors: True
+
+    - name: Check if chef server is installed
+      command: rpm -q chef-server
+      when: ansible_os_family == "RedHat"
       register: chef_installed
       ignore_errors: True
 
     - name: Install chef server
       command: dpkg -i /tmp/chef-server_11.0.8-1.ubuntu.12.04_amd64.deb
-      when: chef_installed|failed
+      when: chef_installed|failed and ansible_os_family == "Debian"
+
+    - name: Install chef server
+      command: rpm -i /tmp/chef-server-11.0.4-1.el6.x86_64.rpm
+      when: chef_installed|failed and ansible_os_family == "RedHat"
 
     - name: Configure chef server
       tags: chef-server
@@ -57,6 +98,11 @@
 
     - name: Install git
       apt: name=git state=present
+      when: ansible_os_family == "Debian"
+
+    - name: Install git
+      yum: name=git state=present
+      when: ansible_os_family == "RedHat"
 
     - name: Clone chef-cookbooks
       git: repo=https://github.com/rcbops/chef-cookbooks dest={{ansible_env.HOME}}/chef-cookbooks version=master

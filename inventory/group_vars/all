@@ -1,6 +1,11 @@
 flavor: performance1-4
 image: 80fbcb55-b206-41f9-9bc2-2dd7aac6c061
 keypair: junk
+# CentOS:
+#knife_command: /opt/chef-server/bin/knife
 knife_command: /opt/chef-server/embedded/bin/knife
 network: roush
 network_prefix: 192.168.0
+# CentOS:
+#sftp: /usr/libexec/openssh/sftp-server
+sftp: /usr/lib/openssh/sftp-server
