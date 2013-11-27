@@ -1,6 +1,5 @@
 [chef]
 jenkins-chef
-jenkins-chef
 
 [ceph]
 jenkins-ceph-1
