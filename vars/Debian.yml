@@ -1,5 +1,5 @@
 ---
 knife_command: /opt/chef-server/embedded/bin/knife
-package_url: https://opscode-omnibus-packages.s3.amazonaws.com/ubuntu/12.04/x86_64/
+package_url: https://opscode-omnibus-packages.s3.amazonaws.com/ubuntu/12.04/x86_64
 package_name: chef-server_11.0.8-1.ubuntu.12.04_amd64.deb
 sftp: /usr/lib/openssh/sftp-server
