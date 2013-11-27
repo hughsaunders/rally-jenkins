@@ -1,6 +1,6 @@
 Large chunks of code "borrowed" from https://github.com/apsu/virtlab, but simplified down for this particular use-case.
 
-To deploy an OpenStack + Ceph cluster, create a rax_creds file w/ your Rackspace cloud details and then run:
+To deploy an OpenStack + Ceph cluster, create a `rax_creds` file w/ your Rackspace cloud details and then run:
 
     ansible-playbook bootstrap.yml
 
