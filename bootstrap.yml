@@ -28,6 +28,8 @@
 
 - name: Disable iptables
   hosts: all
+  vars_files:
+    - "vars/{{ansible_os_family}}.yml"
   tasks:
     - name: Clear ruleset
       shell: "{{item}}-restore < /dev/null"
@@ -75,22 +77,22 @@
     - name: Check if chef server is installed
       command: dpkg -l chef-server
       when: ansible_os_family == "Debian"
-      register: chef_installed
+      register: chef_installed_deb
       ignore_errors: True
 
     - name: Check if chef server is installed
       command: rpm -q chef-server
       when: ansible_os_family == "RedHat"
-      register: chef_installed
+      register: chef_installed_rh
       ignore_errors: True
 
     - name: Install chef server
       command: dpkg -i /tmp/chef-server_11.0.8-1.ubuntu.12.04_amd64.deb
-      when: chef_installed|failed and ansible_os_family == "Debian"
+      when: chef_installed_deb|failed and ansible_os_family == "Debian"
 
     - name: Install chef server
       command: rpm -i /tmp/chef-server-11.0.4-1.el6.x86_64.rpm
-      when: chef_installed|failed and ansible_os_family == "RedHat"
+      when: chef_installed_rh|failed and ansible_os_family == "RedHat"
 
     - name: Configure chef server
       tags: chef-server

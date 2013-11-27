@@ -1,0 +1,3 @@
+---
+knife_command: /opt/chef-server/bin/knife
+sftp: /usr/libexec/openssh/sftp-server
