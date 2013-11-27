@@ -8,8 +8,8 @@
         module: rax
         credentials: rax_creds
         name: "{{inventory_hostname}}"
-        flavor: performance1-2
-        image: "{{image_id}}"
+        flavor: "{{flavor}}"
+        image: "{{image}}"
         keypair: "{{keypair}}"
         disk_config: manual
         wait: yes
