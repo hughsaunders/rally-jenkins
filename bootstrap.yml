@@ -114,7 +114,7 @@
       when: chef_installed_deb|failed and ansible_os_family == "Debian"
 
     - name: Install chef server
-      command: "rpm -i /tmp/{{package_name}}"
+      yum: name=/tmp/{{package_name}} state=present
       when: chef_installed_rh|failed and ansible_os_family == "RedHat"
 
     - name: Configure chef server
@@ -263,6 +263,7 @@
 
     - name: Run ceph-disk-active
       command: "/usr/sbin/ceph-disk-activate {{disk}}"
+      when: "'/dev/' in disk"
 
 
 - name: Add single-controller, cinder-volume roles
@@ -270,6 +271,10 @@
   tags:
     - configure
   tasks:
+    - name: Install pbr (openstack-dashboard syncdb fails if this isn't present)
+      yum: name=pbr state=present
+      when: ansible_os_family == "RedHat"
+
     - command: "{{knife_command}} node run_list add {{item}} role[single-controller],role[cinder-volume]"
       with_items: groups.openstack
 
