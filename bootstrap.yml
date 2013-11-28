@@ -203,6 +203,8 @@
 
 - name: Add host entry on cluster nodes for chef-server
   hosts: cluster
+  tags:
+    - configure
   tasks:
     - name: test
       lineinfile:
