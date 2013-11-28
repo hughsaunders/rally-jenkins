@@ -295,7 +295,7 @@
 
 
 - name: Cleanup environment
-  hosts: all
+  hosts: nonlocal
   tags:
     - destroy
   gather_facts: False
