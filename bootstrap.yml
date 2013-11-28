@@ -16,6 +16,8 @@
         disk_config: manual
         wait: yes
         state: present
+        meta:
+            jenkins-job-id: "{{buildid}}"
         networks:
           - private
           - public
@@ -311,6 +313,8 @@
         disk_config: manual
         wait: yes
         state: absent
+        meta:
+            jenkins-job-id: "{{buildid}}"
         networks:
           - private
           - public
