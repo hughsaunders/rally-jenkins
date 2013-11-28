@@ -198,9 +198,14 @@
       ignore_errors: True
 
     - name: Create osd_devices attribute
-      command: "{{knife_command}} exec -E \"@n=Chef::Node.load('{{item}}') ; a=@n.normal ; a['ceph']['osd_devices']=[{'device' => '/dev/{{disk}}'}];;@n.save\""
+      command: "{{knife_command}} exec -E \"@n=Chef::Node.load('{{item}}') ; a=@n.normal ; a['ceph']['osd_devices']=[{'device' => '{{disk}}'}];;@n.save\""
       with_items: groups.ceph
-      when: result|failed
+      when: result|failed and "/dev/" in disk
+
+    - name: Create osd_devices attribute
+      command: "{{knife_command}} exec -E \"@n=Chef::Node.load('{{item}}') ; a=@n.normal ; a['ceph']['osd_devices']=[{'device' => '{{disk}}', 'type' => 'directory'}];;@n.save\""
+      with_items: groups.ceph
+      when: result|failed and not "/dev/" in disk
 
 
 - name: Add host entry on cluster nodes for chef-server
@@ -257,7 +262,7 @@
       command: chef-client
 
     - name: Run ceph-disk-active
-      command: "/usr/sbin/ceph-disk-activate /dev/{{disk}}"
+      command: "/usr/sbin/ceph-disk-activate {{disk}}"
 
 
 - name: Add single-controller, cinder-volume roles
