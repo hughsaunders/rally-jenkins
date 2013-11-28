@@ -190,13 +190,13 @@
       changed_when: output.stdout != ""
 
     - name: Check if osd_devices attribute exists
-      shell: "{{knife_command}} search node \"name:{{item}}\" -a ceph.osd_devices | grep xvde1"
+      shell: "{{knife_command}} search node \"name:{{item}}\" -a ceph.osd_devices | grep {{disk}}"
       with_items: groups.ceph
       register: result
       ignore_errors: True
 
     - name: Create osd_devices attribute
-      command: "{{knife_command}} exec -E \"@n=Chef::Node.load('{{item}}') ; a=@n.normal ; a['ceph']['osd_devices']=[{'device' => '/dev/xvde1'}];;@n.save\""
+      command: "{{knife_command}} exec -E \"@n=Chef::Node.load('{{item}}') ; a=@n.normal ; a['ceph']['osd_devices']=[{'device' => '/dev/{{disk}}'}];;@n.save\""
       with_items: groups.ceph
       when: result|failed
 
@@ -255,7 +255,7 @@
       command: chef-client
 
     - name: Run ceph-disk-active
-      command: /usr/sbin/ceph-disk-activate /dev/xvde1
+      command: "/usr/sbin/ceph-disk-activate /dev/{{disk}}"
 
 
 - name: Add single-controller, cinder-volume roles
