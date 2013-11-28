@@ -295,7 +295,7 @@
 - name: Cleanup environment
   hosts: all
   tags:
-    - launch
+    - destroy
   gather_facts: False
   tasks:
     - name: Delete instances
