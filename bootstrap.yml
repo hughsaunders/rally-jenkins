@@ -1,13 +1,15 @@
 ---
 - name: Build instances
   hosts: all
+  tags:
+    - launch
   gather_facts: False
   tasks:
     - name: Server build request
       local_action:
         module: rax
         credentials: rax_creds
-        name: "{{inventory_hostname}}"
+        name: "{{buildid}}-{{inventory_hostname}}"
         flavor: "{{flavor}}"
         image: "{{image}}"
         keypair: "{{keypair}}"
@@ -22,12 +24,34 @@
 
     - name: Store host access IPs
       set_fact: ansible_ssh_host={{item.accessIPv4}}
-      when: item.name == inventory_hostname # Avoid dupes
+      when: item.name == "{{buildid}}-{{inventory_hostname}}" # Avoid dupes
       with_items: rax.instances
+
+
+- name: Remove jenkins build ID from hostname
+  hosts: all
+  tags:
+    - launch
+  tasks:
+    - name: Update /etc/hosts
+      command: "sed -i 's/{{buildid}}-{{inventory_hostname}}/{{inventory_hostname}}/g' /etc/hosts"
+
+    - name: Update /etc/hostname
+      command: "sed -i 's/{{buildid}}-{{inventory_hostname}}/{{inventory_hostname}}/g' /etc/hostname"
+      when: ansible_os_family == "Debian"
+
+    - name: Update /etc/hostname
+      command: "sed -i 's/{{buildid}}-{{inventory_hostname}}/{{inventory_hostname}}/g' /etc/sysconfig/network"
+      when: ansible_os_family == "RedHat"
+
+    - name: Set hostname
+      command: "hostname {{inventory_hostname}}"
 
 
 - name: Disable iptables
   hosts: all
+  tags:
+    - configure
   vars_files:
     - "vars/{{ansible_os_family}}.yml"
   tasks:
@@ -55,6 +79,8 @@
 
 - name: Install chef-server
   hosts: chef
+  tags:
+    - configure
   tasks:
     - name: Add host entry on chef-server for each cluster host
       lineinfile:
@@ -122,6 +148,8 @@
 
 - name: Bootstrap cluster nodes
   hosts: chef
+  tags:
+    - configure
   tasks:
     - name: Get node list
       command: "{{knife_command}} node list"
@@ -129,7 +157,7 @@
       changed_when: False # Doesn't apply
 
     - name: Bootstrap nodes
-      command: "{{knife_command}} bootstrap {{item}} --server-url https://{{ansible_ssh_host}}:443"
+      command: "{{knife_command}} bootstrap {{item}} --server-url https://{{ansible_ssh_host}}:443 -N {{item}}"
       register: bootstrap
       when: not item in list.stdout
       with_items: groups.cluster
@@ -147,6 +175,8 @@
 
 - name: Update chef environment
   hosts: chef
+  tags:
+    - configure
   tasks:
     - name: Set node environments
       command: "{{knife_command}} exec -E \"nodes.search('name:*') {|n| n.chef_environment('havana'); puts n.name; n.save}\""
@@ -184,18 +214,24 @@
 
 - name: Add ceph-mon role
   hosts: chef
+  tags:
+    - configure
   tasks:
     - command: "{{knife_command}} node run_list add {{groups.ceph[0]}} role[ceph-mon]"
 
 
 - name: Run chef-client
   hosts: ceph[0]
+  tags:
+    - configure
   tasks:
     - command: chef-client
 
   
 - name: Add ceph-osd role
   hosts: chef
+  tags:
+    - configure
   tasks:
     - command: "{{knife_command}} node run_list add {{item}} role[ceph-osd]"
       with_items: groups.ceph
@@ -210,6 +246,8 @@
 
 - name: Finish ceph deploy
   hosts: ceph
+  tags:
+    - configure
   tasks:
     - name: Run chef-client
       command: chef-client
@@ -220,6 +258,8 @@
 
 - name: Add single-controller, cinder-volume roles
   hosts: chef
+  tags:
+    - configure
   tasks:
     - command: "{{knife_command}} node run_list add {{item}} role[single-controller],role[cinder-volume]"
       with_items: groups.openstack
@@ -227,6 +267,8 @@
 
 - name: Run chef-client on openstack
   hosts: openstack
+  tags:
+    - configure
   tasks:
     - name: Run chef-client
       command: chef-client
@@ -234,6 +276,8 @@
 
 - name: Add single-compute roles (this needs to be done after single-controller/cinder-volume are provisioned)
   hosts: chef
+  tags:
+    - configure
   tasks:
     - command: "{{knife_command}} node run_list add {{item}} role[single-compute]"
       with_items: groups.openstack
@@ -241,6 +285,31 @@
 
 - name: Finish openstack deploy
   hosts: openstack
+  tags:
+    - configure
   tasks:
     - name: Run chef-client
       command: chef-client
+
+
+- name: Cleanup environment
+  hosts: all
+  tags:
+    - launch
+  gather_facts: False
+  tasks:
+    - name: Delete instances
+      local_action:
+        module: rax
+        credentials: rax_creds
+        name: "{{buildid}}-{{inventory_hostname}}"
+        flavor: "{{flavor}}"
+        image: "{{image}}"
+        keypair: "{{keypair}}"
+        disk_config: manual
+        wait: yes
+        state: absent
+        networks:
+          - private
+          - public
+          - "{{network}}"
