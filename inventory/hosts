@@ -8,7 +8,7 @@ jenkins-ceph-2
 [openstack]
 jenkins-openstack
 
-[all:children]
+[nonlocal:children]
 chef
 ceph
 openstack

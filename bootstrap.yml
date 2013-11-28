@@ -1,6 +1,6 @@
 ---
 - name: Build instances
-  hosts: all
+  hosts: nonlocal
   tags:
     - launch
   gather_facts: False
@@ -29,7 +29,7 @@
 
 
 - name: Remove jenkins build ID from hostname
-  hosts: all
+  hosts: nonlocal
   tags:
     - launch
   tasks:
@@ -49,7 +49,7 @@
 
 
 - name: Disable iptables
-  hosts: all
+  hosts: nonlocal
   tags:
     - configure
   vars_files:
