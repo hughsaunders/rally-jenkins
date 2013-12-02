@@ -18,6 +18,7 @@
         state: present
         meta:
             jenkins-job-id: "{{buildid}}"
+        region: "{{region}}"
         networks:
           - private
           - public
