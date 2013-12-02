@@ -1,4 +1,4 @@
-buildid: build_id_missing
+buildid: build-id-missing
 disk: /dev/xvde1
 flavor: performance1-4
 image: 80fbcb55-b206-41f9-9bc2-2dd7aac6c061
