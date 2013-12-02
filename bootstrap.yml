@@ -334,6 +334,7 @@
         disk_config: manual
         wait: yes
         state: absent
+        region: "{{region}}"
         meta:
             jenkins-job-id: "{{buildid}}"
         networks:
