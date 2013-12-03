@@ -169,8 +169,8 @@
       when: bootstrap|changed
       register: output
       until: item in output.stdout
-      retries: 10
-      delay: 10
+      retries: 24
+      delay: 5
       with_items: groups.cluster
       changed_when: output.stdout
 
@@ -187,8 +187,8 @@
       command: "{{knife_command}} exec -E \"nodes.search('chef_environment:_default') {|n| puts n.name}\""
       register: output
       until: output.stdout == ""
-      retries: 10
-      delay: 10
+      retries: 24
+      delay: 5
       changed_when: output.stdout != ""
 
     - name: Check if osd_devices attribute exists
@@ -248,8 +248,8 @@
       command: "{{knife_command}} exec -E \"nodes.search('role:ceph-mon AND ceph_bootstrap_osd_key:*') {|n| puts n.name}\""
       register: output
       until: output.stdout != ""
-      retries: 10
-      delay: 10
+      retries: 24
+      delay: 5
       changed_when: output.stdout != ""
 
 
