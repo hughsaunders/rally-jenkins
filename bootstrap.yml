@@ -119,7 +119,6 @@
       when: chef_installed_rh|failed and ansible_os_family == "RedHat"
 
     - name: Configure chef server
-      tags: chef-server
       command: chef-server-ctl reconfigure
 
     - name: Install git
@@ -245,6 +244,7 @@
   tasks:
     - command: "{{knife_command}} node run_list add {{item}} role[ceph-osd]"
       with_items: groups.ceph
+
     - name: Wait for Solr cache (if we deploy OSD before cache updates from ceph-mon run then OSD deployment will fail)
       command: "{{knife_command}} exec -E \"nodes.search('role:ceph-mon AND ceph_bootstrap_osd_key:*') {|n| puts n.name}\""
       register: output
@@ -315,6 +315,44 @@
   tasks:
     - name: Run chef-client
       command: chef-client
+
+- name: Add exerstack role
+  hosts: chef
+  tags:
+    - configure
+  tasks:
+    - command: "{{knife_command}} node run_list add {{item}} recipe[exerstack]"
+      with_items: groups.ceph[0]
+
+    - name: Wait for Solr cache (if we deploy OSD before cache updates from ceph-mon run then OSD deployment will fail)
+      command: "{{knife_command}} exec -E \"nodes.search('role:ceph-mon AND ceph_bootstrap_osd_key:*') {|n| puts n.name}\""
+      register: output
+      until: output.stdout != ""
+      retries: 10
+      delay: 10
+      changed_when: output.stdout != ""
+
+
+- name: Run chef-client to deploy exerstack
+  hosts: ceph[0]
+  tags:
+    - configure
+  tasks:
+    - command: chef-client
+
+- name: Run ceph exerstack tests from first ceph node
+  hosts: ceph[0]
+  tags:
+    - exerstack
+  tasks:
+    - shell: cd /opt/exerstack; timeout 5m ./exercise.sh havana ceph.sh
+
+- name: Run openstack exerstack tests from first ceph node
+  hosts: ceph[0]
+  tags:
+    - exerstack
+  tasks:
+      - shell: cd /opt/exerstack; timeout 10m ./exercise.sh havana cinder-cli.sh glance.sh keystone.sh nova-cli.sh
 
 
 - name: Cleanup environment
