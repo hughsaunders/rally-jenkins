@@ -337,7 +337,7 @@
     - configure
   tasks:
     - command: "{{knife_command}} node run_list add {{item}} recipe[exerstack]"
-      with_items: openstack
+      with_items: groups.openstack
 
     - name: Wait for Solr cache (if we deploy OSD before cache updates from ceph-mon run then OSD deployment will fail)
       command: "{{knife_command}} exec -E \"nodes.search('role:ceph-mon AND ceph_bootstrap_osd_key:*') {|n| puts n.name}\""
