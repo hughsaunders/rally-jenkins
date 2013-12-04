@@ -1,4 +1,19 @@
 ---
+- name: Create Network
+  hosts: all[0]
+  gather_facts: False
+  tags:
+    - launch
+  tasks:
+    - name: Create Network
+      local_action:
+        module: rax_network
+        credentials: rax_creds
+        region: "{{region}}"
+        label: "{{buildid}}-jenkins"
+        cidr: "{{network_prefix}}.0/24"
+        state: present
+
 - name: Build instances
   hosts: nonlocal
   tags:
@@ -22,7 +37,7 @@
         networks:
           - private
           - public
-          - "{{network}}"
+          - "{{buildid}}-jenkins"
       register: rax
 
     - name: Store host access IPs
@@ -221,16 +236,16 @@
       with_items: groups.chef
 
 
-- name: Add ceph-mon role
+- name: Add ceph-mon role to openstack AIO node
   hosts: chef
   tags:
     - configure
   tasks:
-    - command: "{{knife_command}} node run_list add {{groups.ceph[0]}} role[ceph-mon]"
+    - command: "{{knife_command}} node run_list add {{groups.openstack[0]}} role[ceph-mon]"
 
 
 - name: Run chef-client
-  hosts: ceph[0]
+  hosts: openstack
   tags:
     - configure
   tasks:
@@ -305,7 +320,7 @@
   tags:
     - configure
   tasks:
-    - command: "{{knife_command}} node run_list add {{item}} role[single-compute]"
+    - command: "{{knife_command}} node run_list add {{item}} role[single-compute],recipe[exerstack]"
       with_items: groups.openstack
 
 
@@ -317,43 +332,30 @@
     - name: Run chef-client
       command: chef-client
 
-- name: Add exerstack role
-  hosts: chef
-  tags:
-    - configure
-  tasks:
-    - command: "{{knife_command}} node run_list add {{item}} recipe[exerstack]"
-      with_items: groups.ceph[0]
 
-    - name: Wait for Solr cache (if we deploy OSD before cache updates from ceph-mon run then OSD deployment will fail)
-      command: "{{knife_command}} exec -E \"nodes.search('role:ceph-mon AND ceph_bootstrap_osd_key:*') {|n| puts n.name}\""
-      register: output
-      until: output.stdout != ""
-      retries: 10
-      delay: 10
-      changed_when: output.stdout != ""
-
-
-- name: Run chef-client to deploy exerstack
-  hosts: ceph[0]
-  tags:
-    - configure
-  tasks:
-    - command: chef-client
-
-- name: Run ceph exerstack tests from first ceph node
-  hosts: ceph[0]
+- name: Run ceph exerstack tests.
+  hosts:
+    - openstack
   tags:
     - exerstack
   tasks:
     - shell: cd /opt/exerstack; timeout 5m ./exercise.sh havana ceph.sh
 
-- name: Run openstack exerstack tests from first ceph node
-  hosts: ceph[0]
+
+- name: Run openstack exerstack tests.
+  hosts: openstack
   tags:
     - exerstack
   tasks:
       - shell: cd /opt/exerstack; timeout 10m ./exercise.sh havana cinder-cli.sh glance.sh keystone.sh nova-cli.sh
+
+
+- name: Run openstack-ceph integration exerstack tests.
+  hosts: openstack
+  tags:
+    - exerstack
+  tasks:
+    - shell: cd /opt/exerstack; timeout 10m ./exercise.sh havana ceph-openstack.sh
 
 
 - name: Cleanup environment
@@ -379,4 +381,20 @@
         networks:
           - private
           - public
-          - "{{network}}"
+          - "{{buildid}}-jenkins"
+
+
+- name: Delete Network
+  hosts: all[0]
+  gather_facts: False
+  tags:
+    - destroy
+  tasks:
+    - name: Delete Network
+      local_action:
+        module: rax_network
+        credentials: rax_creds
+        region: "{{region}}"
+        label: "{{buildid}}-jenkins"
+        cidr: "{{network_prefix}}.0/24"
+        state: absent
