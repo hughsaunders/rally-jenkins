@@ -14,6 +14,7 @@
         cidr: "{{network_prefix}}.0/24"
         state: present
 
+
 - name: Build instances
   hosts: nonlocal
   tags:
@@ -160,7 +161,7 @@
       template: src=havana.json.j2 dest={{ansible_env.HOME}}/havana.json
 
     - name: Upload environment
-      shell: "{{knife_command}} environment from_file havana.json"
+      command: "{{knife_command}} environment from_file havana.json"
 
 
 - name: Bootstrap cluster nodes
@@ -339,7 +340,7 @@
   tags:
     - exerstack
   tasks:
-    - shell: cd /opt/exerstack; timeout 5m ./exercise.sh havana ceph.sh
+    - command: timeout 5m ./exercise.sh havana ceph.sh chdir=/opt/exerstack
 
 
 - name: Run openstack exerstack tests.
@@ -347,7 +348,7 @@
   tags:
     - exerstack
   tasks:
-      - shell: cd /opt/exerstack; timeout 10m ./exercise.sh havana cinder-cli.sh glance.sh keystone.sh nova-cli.sh
+      - command: timeout 10m ./exercise.sh havana cinder-cli.sh glance.sh keystone.sh nova-cli.sh chdir=/opt/exerstack
 
 
 - name: Run openstack-ceph integration exerstack tests.
@@ -355,7 +356,7 @@
   tags:
     - exerstack
   tasks:
-    - shell: cd /opt/exerstack; timeout 10m ./exercise.sh havana ceph-openstack.sh
+    - command: timeout 10m ./exercise.sh havana ceph-openstack.sh chdir=/opt/exerstack
 
 
 - name: Cleanup environment
