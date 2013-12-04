@@ -1,4 +1,19 @@
 ---
+- name: Create Network
+  hosts: all[0]
+  gather_facts: False
+  tags:
+    - launch
+  tasks:
+    - name: Create Network
+      local_action:
+        module: rax_network
+        credentials: rax_creds
+        region: "{{region}}"
+        label: "{{buildid}}-jenkins"
+        cidr: "{{network_prefix}}.0/24"
+        state: present
+
 - name: Build instances
   hosts: nonlocal
   tags:
@@ -22,7 +37,7 @@
         networks:
           - private
           - public
-          - "{{network}}"
+          - "{{buildid}}-jenkins"
       register: rax
 
     - name: Store host access IPs
@@ -379,4 +394,20 @@
         networks:
           - private
           - public
-          - "{{network}}"
+          - "{{buildid}}-jenkins"
+
+
+- name: Delete Network
+  hosts: all[0]
+  gather_facts: False
+  tags:
+    - destroy
+  tasks:
+    - name: Delete Network
+      local_action:
+        module: rax_network
+        credentials: rax_creds
+        region: "{{region}}"
+        label: "{{buildid}}-jenkins"
+        cidr: "{{network_prefix}}.0/24"
+        state: absent
