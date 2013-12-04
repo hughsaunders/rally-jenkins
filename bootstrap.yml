@@ -221,16 +221,16 @@
       with_items: groups.chef
 
 
-- name: Add ceph-mon role
+- name: Add ceph-mon role to openstack AIO node
   hosts: chef
   tags:
     - configure
   tasks:
-    - command: "{{knife_command}} node run_list add {{groups.ceph[0]}} role[ceph-mon]"
+    - command: "{{knife_command}} node run_list add {{groups.openstack[0]}} role[ceph-mon]"
 
 
 - name: Run chef-client
-  hosts: ceph[0]
+  hosts: openstack
   tags:
     - configure
   tasks:
@@ -322,7 +322,7 @@
     - configure
   tasks:
     - command: "{{knife_command}} node run_list add {{item}} recipe[exerstack]"
-      with_items: groups.ceph[0]
+      with_items: openstack
 
     - name: Wait for Solr cache (if we deploy OSD before cache updates from ceph-mon run then OSD deployment will fail)
       command: "{{knife_command}} exec -E \"nodes.search('role:ceph-mon AND ceph_bootstrap_osd_key:*') {|n| puts n.name}\""
@@ -334,21 +334,22 @@
 
 
 - name: Run chef-client to deploy exerstack
-  hosts: ceph[0]
+  hosts: openstack
   tags:
     - configure
   tasks:
     - command: chef-client
 
-- name: Run ceph exerstack tests from first ceph node
-  hosts: ceph[0]
+- name: Run ceph exerstack tests.
+  hosts:
+    - openstack
   tags:
     - exerstack
   tasks:
     - shell: cd /opt/exerstack; timeout 5m ./exercise.sh havana ceph.sh
 
-- name: Run openstack exerstack tests from first ceph node
-  hosts: ceph[0]
+- name: Run openstack exerstack tests.
+  hosts: openstack
   tags:
     - exerstack
   tasks:
