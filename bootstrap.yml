@@ -284,20 +284,6 @@
       #when: "'/dev/' in disk"
 
 
-- name: CentOS work-around to install python-pbr package before we install OpenStack
-  hosts: openstack
-  tags:
-    - configure
-  tasks:
-    - name: Run chef-client w/ base role (to add EPEL repo)
-      command: chef-client -o role[base]
-      when: ansible_os_family == "RedHat"
-
-    - name: Install pbr (openstack-dashboard syncdb fails if this is not present)
-      yum: name=python-pbr state=present
-      when: ansible_os_family == "RedHat"
-
-
 - name: Add single-controller, cinder-volume roles
   hosts: chef
   tags:
