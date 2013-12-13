@@ -2,31 +2,21 @@
   setup:
 
 - name: Update /etc/hosts
-  tags:
-    - preconfigure
   command: "sed -i 's/{{buildid}}-{{inventory_hostname}}/{{inventory_hostname}}/g' /etc/hosts"
 
 - name: Update /etc/hostname
-  tags:
-    - preconfigure
   command: "sed -i 's/{{buildid}}-{{inventory_hostname}}/{{inventory_hostname}}/g' /etc/hostname"
   when: ansible_os_family == "Debian"
 
 - name: Update /etc/hostname
-  tags:
-    - preconfigure
   command: "sed -i 's/{{buildid}}-{{inventory_hostname}}/{{inventory_hostname}}/g' /etc/sysconfig/network"
   when: ansible_os_family == "RedHat"
 
 - name: Set hostname
-  tags:
-    - preconfigure
   command: "hostname {{inventory_hostname}}"
 
 
 - name: Clear ruleset
-  tags:
-    - preconfigure
   shell: "{{item}}-restore < /dev/null"
   with_items:
   - iptables
@@ -34,8 +24,6 @@
   when: ansible_os_family == "RedHat"
 
 - name: Stop iptables
-  tags:
-    - preconfigure
   service: name={{item}} state=stopped enabled=no
   with_items:
   - iptables
@@ -43,8 +31,6 @@
   when: ansible_os_family == "RedHat"
 
 - name: Save empty ruleset
-  tags:
-    - preconfigure
   shell: "{{item}}-save > /etc/sysconfig/{{item}}"
   with_items:
   - iptables

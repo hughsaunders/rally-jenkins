@@ -2,16 +2,19 @@
 - name: Ensure Network
   hosts: all[0]
   gather_facts: false
+  tags: launch
   roles:
     - { role: ensure-network, state: "present" }
 
 - hosts: nonlocal
   gather_facts: false
+  tags: launch
   roles:
     - { role: ensure-instance, state: "present" }
     - { role: cloud-instance-prechef-config }
 
 - hosts: chef
+  tags: configure
   vars_files:
     - "vars/{{ansible_os_family}}.yml"
   roles:
@@ -19,22 +22,30 @@
     - { role: configure-rcbops-cookbooks }
 
 - hosts: cluster
+  tags: configure
   vars_files:
     - "vars/{{ansible_os_family}}.yml"
   roles:
     - { role: chef-client, chef_environment: 'havana' }
 
 - hosts: openstack
+  tags: configure
   roles:
     - { role: chef-deploy-ceph-mon }
 
 - hosts: ceph
+  tags: configure
   roles:
     - { role: chef-deploy-ceph-osd }
 
 - hosts: openstack
+  tags: configure
   roles:
     - { role: chef-deploy-openstack }
+
+- hosts: openstack
+  tags: exerstack
+  roles:
     - { role: run-exerstack }
 
 

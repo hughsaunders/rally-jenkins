@@ -1,7 +1,6 @@
 - name: Clone chef-cookbooks
   git: repo=https://github.com/rcbops/chef-cookbooks dest={{ansible_env.HOME}}/chef-cookbooks version=master
 
-
 - name: Upload cookbooks
   command: "{{knife_command}} cookbook upload -o chef-cookbooks/cookbooks -a"
 
