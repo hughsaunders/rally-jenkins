@@ -1,387 +1,53 @@
 ---
-- name: Create Network
+- name: Ensure Network
   hosts: all[0]
-  gather_facts: False
-  tags:
-    - launch
-  tasks:
-    - name: Create Network
-      local_action:
-        module: rax_network
-        credentials: rax_creds
-        region: "{{region}}"
-        label: "{{buildid}}-jenkins"
-        cidr: "{{network_prefix}}.0/24"
-        state: present
+  gather_facts: false
+  roles:
+    - { role: ensure-network, state: "present" }
 
+- hosts: nonlocal
+  gather_facts: false
+  roles:
+    - { role: ensure-instance, state: "present" }
+    - { role: cloud-instance-prechef-config }
 
-- name: Build instances
-  hosts: nonlocal
-  tags:
-    - launch
-  gather_facts: False
-  tasks:
-    - name: Server build request
-      local_action:
-        module: rax
-        credentials: rax_creds
-        name: "{{buildid}}-{{inventory_hostname}}"
-        flavor: "{{flavor}}"
-        image: "{{image}}"
-        keypair: "{{keypair}}"
-        disk_config: manual
-        wait: yes
-        state: present
-        meta:
-            jenkins-job-id: "{{buildid}}"
-        region: "{{region}}"
-        networks:
-          - private
-          - public
-          - "{{buildid}}-jenkins"
-      register: rax
-
-    - name: Store host access IPs
-      set_fact: ansible_ssh_host={{item.accessIPv4}}
-      when: item.name == "{{buildid}}-{{inventory_hostname}}" # Avoid dupes
-      with_items: rax.instances
-
-
-- name: Remove jenkins build ID from hostname
-  hosts: nonlocal
-  tags:
-    - launch
-  tasks:
-    - name: Update /etc/hosts
-      command: "sed -i 's/{{buildid}}-{{inventory_hostname}}/{{inventory_hostname}}/g' /etc/hosts"
-
-    - name: Update /etc/hostname
-      command: "sed -i 's/{{buildid}}-{{inventory_hostname}}/{{inventory_hostname}}/g' /etc/hostname"
-      when: ansible_os_family == "Debian"
-
-    - name: Update /etc/hostname
-      command: "sed -i 's/{{buildid}}-{{inventory_hostname}}/{{inventory_hostname}}/g' /etc/sysconfig/network"
-      when: ansible_os_family == "RedHat"
-
-    - name: Set hostname
-      command: "hostname {{inventory_hostname}}"
-
-
-- name: Disable iptables
-  hosts: nonlocal
-  tags:
-    - configure
+- hosts: chef
   vars_files:
     - "vars/{{ansible_os_family}}.yml"
-  tasks:
-    - name: Clear ruleset
-      shell: "{{item}}-restore < /dev/null"
-      with_items:
-      - iptables
-      - ip6tables
-      when: ansible_os_family == "RedHat"
+  roles:
+    - { role: chef-server }
+    - { role: configure-rcbops-cookbooks }
 
-    - name: Stop iptables
-      service: name={{item}} state=stopped enabled=no
-      with_items:
-      - iptables
-      - ip6tables
-      when: ansible_os_family == "RedHat"
+- hosts: cluster
+  vars_files:
+    - "vars/{{ansible_os_family}}.yml"
+  roles:
+    - { role: chef-client, chef_environment: 'havana' }
 
-    - name: Save empty ruleset
-      shell: "{{item}}-save > /etc/sysconfig/{{item}}"
-      with_items:
-      - iptables
-      - ip6tables
-      when: ansible_os_family == "RedHat"
+- hosts: openstack
+  roles:
+    - { role: chef-deploy-ceph-mon }
 
+- hosts: ceph
+  roles:
+    - { role: chef-deploy-ceph-osd }
 
-- name: Install chef-server
-  hosts: chef
-  tags:
-    - configure
-  tasks:
-    - name: Add host entry on chef-server for each cluster host
-      lineinfile:
-        dest: /etc/hosts
-        insertafter: EOF
-        line: "{{hostvars[item].ansible_ssh_host}}\t{{item}}"
-      with_items: groups.cluster
-
-    - name: Upload SSH private key
-      copy: src=id_rsa dest={{ansible_env.HOME}}/.ssh/id_rsa mode=0600
-
-    - name: Download chef server
-      command: "wget {{package_url}}/{{package_name}} chdir=/tmp creates=/tmp/{{package_name}}"
-
-    - name: Check if chef server is installed
-      command: dpkg -l chef-server
-      when: ansible_os_family == "Debian"
-      register: chef_installed_deb
-      ignore_errors: True
-
-    - name: Check if chef server is installed
-      command: rpm -q chef-server
-      when: ansible_os_family == "RedHat"
-      register: chef_installed_rh
-      ignore_errors: True
-
-    - name: Install chef server
-      command: "dpkg -i /tmp/{{package_name}}"
-      when: chef_installed_deb|failed and ansible_os_family == "Debian"
-
-    - name: Install chef server
-      yum: name=/tmp/{{package_name}} state=present
-      when: chef_installed_rh|failed and ansible_os_family == "RedHat"
-
-    - name: Configure chef server
-      command: chef-server-ctl reconfigure
-
-    - name: Install git
-      apt: name=git state=present
-      when: ansible_os_family == "Debian"
-
-    - name: Install git
-      yum: name=git state=present
-      when: ansible_os_family == "RedHat"
-
-    - name: Clone chef-cookbooks
-      git: repo=https://github.com/rcbops/chef-cookbooks dest={{ansible_env.HOME}}/chef-cookbooks version=master
-
-    - name: Configure knife
-      command: "{{knife_command}} configure --yes --defaults --server-url https://127.0.0.1:443 --repository chef-cookbooks/cookbooks --user admin --key /etc/chef-server/admin.pem --admin-client-key /etc/chef-server/admin.pem --admin-client-name admin --validation-client-name chef-validator --validation-key /etc/chef-server/chef-validator.pem chdir={{ansible_env.HOME}}"
-
-    - name: Upload cookbooks
-      command: "{{knife_command}} cookbook upload -o chef-cookbooks/cookbooks -a"
-
-    - name: Upload roles
-      shell: "{{knife_command}} role from_file chef-cookbooks/roles/*.rb"
-
-    - name: Generate chef environment from template
-      template: src=havana.json.j2 dest={{ansible_env.HOME}}/havana.json
-
-    - name: Upload environment
-      command: "{{knife_command}} environment from_file havana.json"
+- hosts: openstack
+  roles:
+    - { role: chef-deploy-openstack }
+    - { role: run-exerstack }
 
 
-- name: Bootstrap cluster nodes
-  hosts: chef
-  tags:
-    - configure
-  tasks:
-    - name: Get node list
-      command: "{{knife_command}} node list"
-      register: list
-      changed_when: False # Doesn't apply
-
-    - name: Bootstrap nodes
-      command: "{{knife_command}} bootstrap {{item}} --server-url https://{{ansible_ssh_host}}:443 -N {{item}}"
-      register: bootstrap
-      when: not item in list.stdout
-      with_items: groups.cluster
-
-    - name: Wait for Solr cache
-      command: "{{knife_command}} exec -E \"nodes.search('name:*') {|n| puts n.name}\""
-      when: bootstrap|changed
-      register: output
-      until: item in output.stdout
-      retries: 24
-      delay: 5
-      with_items: groups.cluster
-      changed_when: output.stdout
-
-
-- name: Update chef environment
-  hosts: chef
-  tags:
-    - configure
-  tasks:
-    - name: Set node environments
-      command: "{{knife_command}} exec -E \"nodes.search('name:*') {|n| n.chef_environment('havana'); puts n.name; n.save}\""
-
-    - name: Wait for Solr cache
-      command: "{{knife_command}} exec -E \"nodes.search('chef_environment:_default') {|n| puts n.name}\""
-      register: output
-      until: output.stdout == ""
-      retries: 24
-      delay: 5
-      changed_when: output.stdout != ""
-
-    - name: Check if osd_devices attribute exists
-      shell: "{{knife_command}} search node \"name:{{item}}\" -a ceph.osd_devices | grep {{disk}}"
-      with_items: groups.ceph
-      register: result
-      ignore_errors: True
-
-    - name: Create osd_devices attribute
-      command: "{{knife_command}} exec -E \"@n=Chef::Node.load('{{item}}') ; a=@n.normal ; a['ceph']['osd_devices']=[{'device' => '{{disk}}'}];;@n.save\""
-      with_items: groups.ceph
-      when: result|failed and "/dev/" in disk
-
-    - name: Create osd_devices attribute
-      command: "{{knife_command}} exec -E \"@n=Chef::Node.load('{{item}}') ; a=@n.normal ; a['ceph']['osd_devices']=[{'device' => '{{disk}}', 'type' => 'directory'}];;@n.save\""
-      with_items: groups.ceph
-      when: result|failed and not "/dev/" in disk
-
-
-- name: Add host entry on cluster nodes for chef-server
-  hosts: cluster
-  tags:
-    - configure
-  tasks:
-    - name: test
-      lineinfile:
-        dest: /etc/hosts
-        insertafter: EOF
-        line: "{{hostvars[item].ansible_ssh_host}}\t{{item}}"
-      with_items: groups.chef
-
-
-- name: Add ceph-mon role to openstack AIO node
-  hosts: chef
-  tags:
-    - configure
-  tasks:
-    - command: "{{knife_command}} node run_list add {{groups.openstack[0]}} role[ceph-mon]"
-
-
-- name: Run chef-client
-  hosts: openstack
-  tags:
-    - configure
-  tasks:
-    - command: chef-client
-
-  
-- name: Add ceph-osd role
-  hosts: chef
-  tags:
-    - configure
-  tasks:
-    - command: "{{knife_command}} node run_list add {{item}} role[ceph-osd]"
-      with_items: groups.ceph
-
-    - name: Wait for Solr cache (if we deploy OSD before cache updates from ceph-mon run then OSD deployment will fail)
-      command: "{{knife_command}} exec -E \"nodes.search('role:ceph-mon AND ceph_bootstrap_osd_key:*') {|n| puts n.name}\""
-      register: output
-      until: output.stdout != ""
-      retries: 24
-      delay: 5
-      changed_when: output.stdout != ""
-
-
-- name: Finish ceph deploy
-  hosts: ceph
-  tags:
-    - configure
-  tasks:
-    - name: Run chef-client
-      command: chef-client
-
-    - name: Run ceph-disk-active
-      command: "/usr/sbin/ceph-disk-activate {{disk}}"
-      # Should be safe to run this on an already activated disk
-      #when: "'/dev/' in disk"
-
-
-- name: Add single-controller, cinder-volume roles
-  hosts: chef
-  tags:
-    - configure
-  tasks:
-    - command: "{{knife_command}} node run_list add {{item}} role[single-controller],role[cinder-volume]"
-      with_items: groups.openstack
-
-
-- name: Run chef-client on openstack
-  hosts: openstack
-  tags:
-    - configure
-  tasks:
-    - name: Run chef-client
-      command: chef-client
-
-
-- name: Add single-compute roles (this needs to be done after single-controller/cinder-volume are provisioned)
-  hosts: chef
-  tags:
-    - configure
-  tasks:
-    - command: "{{knife_command}} node run_list add {{item}} role[single-compute],recipe[exerstack]"
-      with_items: groups.openstack
-
-
-- name: Finish openstack deploy
-  hosts: openstack
-  tags:
-    - configure
-  tasks:
-    - name: Run chef-client
-      command: chef-client
-
-
-- name: Run ceph exerstack tests.
-  hosts:
-    - openstack
-  tags:
-    - exerstack
-  tasks:
-    - command: timeout 5m ./exercise.sh havana ceph.sh chdir=/opt/exerstack
-
-
-- name: Run openstack exerstack tests.
-  hosts: openstack
-  tags:
-    - exerstack
-  tasks:
-      - command: timeout 10m ./exercise.sh havana cinder-cli.sh glance.sh keystone.sh nova-cli.sh chdir=/opt/exerstack
-
-
-- name: Run openstack-ceph integration exerstack tests.
-  hosts: openstack
-  tags:
-    - exerstack
-  tasks:
-    - command: timeout 10m ./exercise.sh havana ceph-openstack.sh chdir=/opt/exerstack
-
-
-- name: Cleanup environment
+- name: Remove instances
   hosts: nonlocal
-  tags:
-    - destroy
-  gather_facts: False
-  tasks:
-    - name: Delete instances
-      local_action:
-        module: rax
-        credentials: rax_creds
-        name: "{{buildid}}-{{inventory_hostname}}"
-        flavor: "{{flavor}}"
-        image: "{{image}}"
-        keypair: "{{keypair}}"
-        disk_config: manual
-        wait: yes
-        state: absent
-        region: "{{region}}"
-        meta:
-            jenkins-job-id: "{{buildid}}"
-        networks:
-          - private
-          - public
-          - "{{buildid}}-jenkins"
+  tags: destroy
+  gather_facts: false
+  roles:
+    - { role: ensure-instance, state: "absent" }
 
-
-- name: Delete Network
+- name: Remove Network
   hosts: all[0]
-  gather_facts: False
-  tags:
-    - destroy
-  tasks:
-    - name: Delete Network
-      local_action:
-        module: rax_network
-        credentials: rax_creds
-        region: "{{region}}"
-        label: "{{buildid}}-jenkins"
-        cidr: "{{network_prefix}}.0/24"
-        state: absent
+  tags: destroy
+  gather_facts: false
+  roles:
+    - { role: ensure-network, state: "absent" }

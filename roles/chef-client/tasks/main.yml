@@ -1,0 +1,29 @@
+- name: Get node list
+  command: "{{knife_command}} node list"
+  register: list
+  changed_when: False # Doesn't apply
+  delegate_to: "{{groups.chef[0]}}"
+
+- name: Bootstrap nodes
+  command: "{{knife_command}} bootstrap {{ansible_ssh_host}} --server-url https://{{hostvars[groups.chef[0]].ansible_ssh_host}}:443 -N {{inventory_hostname}} -E {{chef_environment}}"
+  register: bootstrap
+  when: not inventory_hostname in list.stdout
+  delegate_to: "{{groups.chef[0]}}"
+
+- name: Wait for Solr cache
+  command: "{{knife_command}} exec -E \"nodes.search('name:*') {|n| puts n.name}\""
+  when: bootstrap|changed
+  register: output
+  until: item in output.stdout
+  retries: 24
+  delay: 5
+  with_items: groups.cluster
+  changed_when: output.stdout
+  delegate_to: "{{groups.chef[0]}}"
+
+- name: Add host entry on cluster nodes for chef-server
+  lineinfile:
+    dest: /etc/hosts
+    insertafter: EOF
+    line: "{{hostvars[item].ansible_ssh_host}}\t{{item}}"
+  with_items: groups.chef

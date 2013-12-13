@@ -1,0 +1,9 @@
+- name: Run ceph exerstack tests.
+  command: timeout 5m ./exercise.sh havana ceph.sh chdir=/opt/exerstack
+
+- name: Run openstack exerstack tests.
+  command: timeout 10m ./exercise.sh havana cinder-cli.sh glance.sh keystone.sh nova-cli.sh chdir=/opt/exerstack
+
+- name: Run openstack-ceph integration exerstack tests.
+  command: timeout 10m ./exercise.sh havana ceph-openstack.sh chdir=/opt/exerstack
+

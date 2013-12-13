@@ -1,0 +1,46 @@
+- name: Add host entry on chef-server for each cluster host
+  lineinfile:
+    dest: /etc/hosts
+    insertafter: EOF
+    line: "{{hostvars[item].ansible_ssh_host}}\t{{item}}"
+  with_items: groups.cluster
+
+- name: Upload SSH private key
+  copy: src=id_rsa dest={{ansible_env.HOME}}/.ssh/id_rsa mode=0600
+
+- name: Download chef server
+  command: "wget {{package_url}}/{{package_name}} chdir=/tmp creates=/tmp/{{package_name}}"
+
+- name: Check if chef server is installed
+  command: dpkg -l chef-server
+  when: ansible_os_family == "Debian"
+  register: chef_installed_deb
+  ignore_errors: True
+
+- name: Check if chef server is installed
+  command: rpm -q chef-server
+  when: ansible_os_family == "RedHat"
+  register: chef_installed_rh
+  ignore_errors: True
+
+- name: Install chef server
+  command: "dpkg -i /tmp/{{package_name}}"
+  when: chef_installed_deb|failed and ansible_os_family == "Debian"
+
+- name: Install chef server
+  yum: name=/tmp/{{package_name}} state=present
+  when: chef_installed_rh|failed and ansible_os_family == "RedHat"
+
+- name: Configure chef server
+  command: chef-server-ctl reconfigure
+
+- name: Install git
+  apt: name=git state=present
+  when: ansible_os_family == "Debian"
+
+- name: Install git
+  yum: name=git state=present
+  when: ansible_os_family == "RedHat"
+
+- name: Configure knife
+  command: "{{knife_command}} configure --yes --defaults --server-url https://127.0.0.1:443 --repository chef-cookbooks/cookbooks --user admin --key /etc/chef-server/admin.pem --admin-client-key /etc/chef-server/admin.pem --admin-client-name admin --validation-client-name chef-validator --validation-key /etc/chef-server/chef-validator.pem chdir={{ansible_env.HOME}}"

@@ -1,0 +1,93 @@
+---
+- name: Ensure Network
+  tags:
+    - launch
+    - destroy
+  local_action:
+    module: rax_network
+    credentials: rax_creds
+    region: "{{region}}"
+    label: "{{buildid}}-jenkins"
+    cidr: "{{network_prefix}}.0/24"
+    state: "{{state}}"
+
+
+- name: Ensure Instance
+  tags:
+    - launch
+    - destroy
+  local_action:
+    module: rax
+    credentials: rax_creds
+    name: "{{buildid}}-{{inventory_hostname}}"
+    flavor: "{{flavor}}"
+    image: "{{image}}"
+    keypair: "{{keypair}}"
+    disk_config: manual
+    wait: yes
+    state: "{{state}}"
+    meta:
+        jenkins-job-id: "{{buildid}}"
+    region: "{{region}}"
+    networks:
+      - private
+      - public
+      - "{{buildid}}-jenkins"
+  register: rax
+
+- name: Store host access IPs
+  tags: launch
+  set_fact: ansible_ssh_host={{item.accessIPv4}}
+  when: item.name == "{{buildid}}-{{inventory_hostname}}" # Avoid dupes
+  with_items: rax.instances
+
+
+- name: Update /etc/hosts
+  tags:
+    - preconfigure
+  command: "sed -i 's/{{buildid}}-{{inventory_hostname}}/{{inventory_hostname}}/g' /etc/hosts"
+
+- name: Update /etc/hostname
+  tags:
+    - preconfigure
+  command: "sed -i 's/{{buildid}}-{{inventory_hostname}}/{{inventory_hostname}}/g' /etc/hostname"
+  when: ansible_os_family == "Debian"
+
+- name: Update /etc/hostname
+  tags:
+    - preconfigure
+  command: "sed -i 's/{{buildid}}-{{inventory_hostname}}/{{inventory_hostname}}/g' /etc/sysconfig/network"
+  when: ansible_os_family == "RedHat"
+
+- name: Set hostname
+  tags:
+    - preconfigure
+  command: "hostname {{inventory_hostname}}"
+
+
+- name: Clear ruleset
+  tags:
+    - preconfigure
+  shell: "{{item}}-restore < /dev/null"
+  with_items:
+  - iptables
+  - ip6tables
+  when: ansible_os_family == "RedHat"
+
+- name: Stop iptables
+  tags:
+    - preconfigure
+  service: name={{item}} state=stopped enabled=no
+  with_items:
+  - iptables
+  - ip6tables
+  when: ansible_os_family == "RedHat"
+
+- name: Save empty ruleset
+  tags:
+    - preconfigure
+  shell: "{{item}}-save > /etc/sysconfig/{{item}}"
+  with_items:
+  - iptables
+  - ip6tables
+  when: ansible_os_family == "RedHat"

@@ -1,0 +1,24 @@
+- name: Ensure Instance
+  local_action:
+    module: rax
+    credentials: rax_creds
+    name: "{{buildid}}-{{inventory_hostname}}"
+    flavor: "{{flavor}}"
+    image: "{{image}}"
+    keypair: "{{keypair}}"
+    disk_config: manual
+    wait: yes
+    state: "{{state}}"
+    meta:
+        jenkins-job-id: "{{buildid}}"
+    region: "{{region}}"
+    networks:
+      - private
+      - public
+      - "{{buildid}}-jenkins"
+  register: rax
+
+- name: Store host access IPs
+  set_fact: ansible_ssh_host={{item.accessIPv4}}
+  with_items: rax.instances
+  when: state == "present"

@@ -1,0 +1,9 @@
+---
+- name: Ensure Network
+  local_action:
+    module: rax_network
+    credentials: rax_creds
+    region: "{{region}}"
+    label: "{{buildid}}-jenkins"
+    cidr: "{{network_prefix}}.0/24"
+    state: "{{state}}"

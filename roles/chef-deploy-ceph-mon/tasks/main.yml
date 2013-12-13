@@ -1,0 +1,7 @@
+---
+- name: Add ceph-mon role
+  command: "{{knife_command}} node run_list add {{inventory_hostname}} role[ceph-mon]"
+  delegate_to: "{{groups.chef[0]}}"
+
+- name: Run chef-client
+  command: chef-client
