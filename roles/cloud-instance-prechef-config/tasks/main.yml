@@ -50,3 +50,16 @@
   - iptables
   - ip6tables
   when: ansible_os_family == "RedHat"
+
+# Workaround RHEL/Centos Qemu bug https://bugzilla.redhat.com/show_bug.cgi?id=1039024
+- name: Remove old qemu packages
+  command: rpm -e qemu-kvm qemu-img --nodeps
+  when: ansible_os_family == "RedHat"
+
+- name: Install RHEV qemu packages
+  command: rpm -ivh http://93e60379985364bc13d8-5b5a0c83cc897bb17fca4c14d2dcd583.r59.cf3.rackcdn.com/qemu-kvm-rhev-0.12.1.2-2.415.el6.x86_64.rpm http://93e60379985364bc13d8-5b5a0c83cc897bb17fca4c14d2dcd583.r59.cf3.rackcdn.com/qemu-img-rhev-0.12.1.2-2.415.el6.x86_64.rpm
+  when: ansible_os_family == "RedHat"
+
+- name: Symlink /usr/lib64/qemu/librbd.so.1 to /usr/lib64/librbd.so.1
+  file: src=/usr/lib64/librbd.so.1 dest=/usr/lib64/qemu/librbd.so.1 state=link
+  when: ansible_os_family == "RedHat"
