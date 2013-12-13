@@ -10,6 +10,11 @@
   when: result|failed and "/dev/" in disk
   delegate_to: "{{groups.chef[0]}}"
 
+- name: Create osd_devices attribute
+  command: "{{knife_command}} exec -E \"@n=Chef::Node.load('{{item}}') ; a=@n.normal ; a['ceph']['osd_devices']=[{'device' => '{{disk}}', 'type' => 'directory'}];;@n.save\""
+  with_items: groups.ceph
+  when: result|failed and not "/dev/" in disk
+
 - name: Add ceph-osd role
   command: "{{knife_command}} node run_list add {{inventory_hostname}} role[ceph-osd]"
   delegate_to: "{{groups.chef[0]}}"
@@ -18,7 +23,11 @@
   command: chef-client
 
 - name: Activate disk
-  command: "/usr/sbin/ceph-disk-activate {{disk}}"
+  shell: "/usr/sbin/ceph-disk-activate {{disk}}; service ceph-osd-all restart; pgrep -fl osd"
+  register: result
+  retries: 10
+  delay: 0
+  until: result.rc == 0
 
 - name: Run chef-client
   command: chef-client
