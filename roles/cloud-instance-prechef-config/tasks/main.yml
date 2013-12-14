@@ -44,8 +44,7 @@
   ignore_errors: true
 
 - name: Install RHEV qemu packages
-  yum: name="http://93e60379985364bc13d8-5b5a0c83cc897bb17fca4c14d2dcd583.r59.cf3.rackcdn.com/qemu-kvm-rhev-0.12.1.2-2.415.el6.x86_64.rpm http://93e60379985364bc13d8-5b5a0c83cc897bb17fca4c14d2dcd583.r59.cf3.rackcdn.com/qemu-img-rhev-0.12.1.2-2.415.el6.x86_64.rpm
-" state=present
+  yum: name="http://93e60379985364bc13d8-5b5a0c83cc897bb17fca4c14d2dcd583.r59.cf3.rackcdn.com/qemu-kvm-rhev-0.12.1.2-2.415.el6.x86_64.rpm http://93e60379985364bc13d8-5b5a0c83cc897bb17fca4c14d2dcd583.r59.cf3.rackcdn.com/qemu-img-rhev-0.12.1.2-2.415.el6.x86_64.rpm" state=present
   when: ansible_os_family == "RedHat"
 
 - name: Symlink /usr/lib64/qemu/librbd.so.1 to /usr/lib64/librbd.so.1
