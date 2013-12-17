@@ -14,6 +14,7 @@
   command: "{{knife_command}} exec -E \"@n=Chef::Node.load('{{item}}') ; a=@n.normal ; a['ceph']['osd_devices']=[{'device' => '{{disk}}', 'type' => 'directory'}];;@n.save\""
   with_items: groups.ceph
   when: result|failed and not "/dev/" in disk
+  delegate_to: "{{groups.chef[0]}}"
 
 - name: Add ceph-osd role
   command: "{{knife_command}} node run_list add {{inventory_hostname}} role[ceph-osd]"
