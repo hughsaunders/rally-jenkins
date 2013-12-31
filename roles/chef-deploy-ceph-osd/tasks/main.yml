@@ -20,6 +20,16 @@
   command: "{{knife_command}} node run_list add {{inventory_hostname}} role[ceph-osd]"
   delegate_to: "{{groups.chef[0]}}"
 
+- name: Wait for Solr cache
+  command: "{{knife_command}} exec -E \"@n=Chef::Node.load('{{inventory_hostname}}') ; a=@n.normal ; a['ceph']['osd_devices']=[{'device' => '{{disk}}'}];;@n.save\""
+  when: result|failed
+  register: output
+  until: output|success
+  retries: 24
+  delay: 5
+  changed_when: False
+  delegate_to: "{{groups.chef[0]}}"
+
 - name: Run chef-client
   command: chef-client
 
