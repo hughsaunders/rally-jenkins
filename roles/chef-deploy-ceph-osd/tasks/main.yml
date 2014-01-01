@@ -25,20 +25,20 @@
   delegate_to: "{{groups.chef[0]}}"
 
 - name: Wait for Solr cache
-  command: "{{knife_command}} exec -E \"@n=Chef::Node.load('{{inventory_hostname}}') ; a=@n.normal ; a['ceph']['osd_devices']=[{'device' => '{{disk}}'}];;@n.save\""
-  when: result|failed
+  command: "{{knife_command}} exec -E \"nodes.search('role:ceph-mon AND ceph_bootstrap_osd_key:*') {|n| puts n.name}\""
   register: output
-  until: output|success
+  until: output.stdout != ""
   retries: 24
   delay: 5
-  changed_when: False
+  changed_when: output.stdout != ""
+  when: result|failed
   delegate_to: "{{groups.chef[0]}}"
 
 - name: Run chef-client
   command: chef-client
 
 - name: Activate disk
-  shell: "/usr/sbin/ceph-disk-activate {{disk}}; service ceph-osd-all restart; pgrep -fl osd"
+  shell: "/usr/sbin/ceph-disk-activate {{disk}}; service ceph-osd-all restart; /etc/init.d/ceph restart; pgrep -fl osd"
   register: result
   retries: 10
   delay: 0
