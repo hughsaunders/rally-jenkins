@@ -5,3 +5,4 @@ package_name: chef-server_11.0.8-1.ubuntu.12.04_amd64.deb
 sftp: /usr/lib/openssh/sftp-server
 libvirt_cpu_mode: host-model
 libvirt_cpu_model: host-model
+cinder_volume_packages: ["cinder-volume", "open-iscsi", "qemu-utils", "sysfsutils"]

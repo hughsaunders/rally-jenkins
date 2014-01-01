@@ -12,3 +12,7 @@
 - name: Run chef-client to finish openstack deploy
   command: chef-client
 
+- name: "Install cinder-volume packages."
+  apt: pkg="{{item}}"
+  with_items: cinder_volume_packages
+
