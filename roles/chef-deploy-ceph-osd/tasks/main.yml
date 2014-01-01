@@ -16,6 +16,10 @@
   when: result|failed and not "/dev/" in disk
   delegate_to: "{{groups.chef[0]}}"
 
+- name: Create OSD Dir
+  file: path=disk state=directory
+  when: not "/dev/" in disk
+
 - name: Add ceph-osd role
   command: "{{knife_command}} node run_list add {{inventory_hostname}} role[ceph-osd]"
   delegate_to: "{{groups.chef[0]}}"
