@@ -11,11 +11,15 @@
         "osops": {
             "do_package_upgrades": false
         },
-        "cinder_volume_packages": [
-            "openstack-cinder",
-            "sysfsutils",
-            "iscsi-initiator-utils"
-        ],
+        "cinder": {
+            "platform": {
+                "cinder_volume_packages": [
+                    "openstack-cinder",
+                    "sysfsutils",
+                    "iscsi-initiator-utils"
+                ]
+            }
+        },
         "openssh": {
             "server": {
                 "subsystem": "sftp {{sftp}}"
