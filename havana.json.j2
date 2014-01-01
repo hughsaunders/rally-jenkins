@@ -11,15 +11,6 @@
         "osops": {
             "do_package_upgrades": false
         },
-        "cinder": {
-            "platform": {
-                "cinder_volume_packages": [
-                    "openstack-cinder",
-                    "sysfsutils",
-                    "iscsi-initiator-utils"
-                ]
-            }
-        },
         "openssh": {
             "server": {
                 "subsystem": "sftp {{sftp}}"
@@ -29,6 +20,13 @@
             "procmon_provider": "monit"
         },
         "cinder": {
+          "platform": {
+              "cinder_volume_packages": [
+                  "openstack-cinder",
+                  "sysfsutils",
+                  "iscsi-initiator-utils"
+              ]
+          },
           "storage": {
             "rbd": {
               "rbd_secret_uuid": "ec8cae63-ac2a-4952-bc4a-81086b462a24"
