@@ -1,3 +1,13 @@
+- name: "Install cinder-volume packages."
+  yum: pkg="{{item}}" state=present
+  with_items: cinder_volume_packages
+  when: ansible_os_family == "RedHat"
+
+- name: "Install cinder-volume packages."
+  apt: pkg="{{item}}" state=present
+  with_items: cinder_volume_packages
+  when: ansible_os_family == "Debian"
+
 - name: Add single-controller, cinder-volume roles
   command: "{{knife_command}} node run_list add {{inventory_hostname}} role[single-controller],role[cinder-volume]"
   delegate_to: "{{groups.chef[0]}}"
@@ -11,14 +21,3 @@
 
 - name: Run chef-client to finish openstack deploy
   command: chef-client
-
-- name: "Install cinder-volume packages."
-  yum: pkg="{{item}}" state=present
-  with_items: cinder_volume_packages
-  when: ansible_os_family == "RedHat"
-
-- name: "Install cinder-volume packages."
-  apt: pkg="{{item}}" state=present
-  with_items: cinder_volume_packages
-  when: ansible_os_family == "Debian"
-
