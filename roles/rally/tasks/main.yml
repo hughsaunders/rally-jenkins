@@ -1,0 +1,40 @@
+- name: install packages
+  apt: pkg="{{item}}" state=present
+  with_items:
+      - "python-dev"
+      - "python-virtualenv"
+      - "build-essential"
+      - jq
+
+- name: clone rally
+  git: repo="{{rally_repo_url}}" dest="/home/{{rally_user}}/rally"
+
+- name: chown rally checkout
+  shell: "chown -R {{rally_user}} /home/{{rally_user}}/rally"
+
+- name: setup rally venv
+  shell: su {{rally_user}} -c "cd ~/rally; virtualenv .venv; source .venv/bin/activate; python setup.py install; pip install pbr"
+
+- name: create rally db
+  shell: su {{rally_user}} -c "cd ~/rally; source .venv/bin/activate; openstack-rally-manage db recreate" creates="/home/{{rally_user}}/rally/.venv/lib/python2.7/site-packages/rally/openstack/common/db/rally.sqlite"
+
+- name: create deployment json
+  template: src=dummy.json.j2 dest="/home/{{rally_user}}/rally/dummy.json" owner={{rally_user}}
+
+- name: create rally deployment
+  shell: su {{rally_user}} -c "cd ~/rally; source .venv/bin/activate; openstack-rally deployment create --name dummy --filename dummy.json"
+
+- name: create instance flavor
+  shell: su {{rally_user}} -c "source ~/devstack/openrc admin; nova flavor-list |grep rally.small || nova flavor-create rally.small 10 256 15 1"
+
+- name: download ubuntu image
+  shell: su {{rally_user}} -c "cd ~/rally; wget {{ubuntu_image_url}}" creates="/home/{{rally_user}}/rally/{{ubuntu_image_url|basename}}"
+
+- name: add ubuntu image to glance
+  shell: su {{rally_user}} -c "cd ~/rally; source ../devstack/openrc admin; glance image-list |grep precise || glance image-create --name=precise --disk-format=qcow2 --container-format=ovf < {{ubuntu_image_url | basename}}"
+
+- name: upload benchmark script
+  copy: src=runsamples.sh dest="/home/{{rally_user}}/rally/runsamples.sh" mode=755
+
+- name: run rally benchmarks
+  shell: su {{rally_user}} -c "cd ~/rally; source ../devstack/openrc admin; source .venv/bin/activate; bash runsamples.sh"

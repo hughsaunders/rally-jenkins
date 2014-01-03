@@ -15,7 +15,6 @@
     networks:
       - private
       - public
-      - "{{buildid}}-jenkins"
   register: rax
 
 - name: Store host access IPs

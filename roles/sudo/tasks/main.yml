@@ -1,0 +1,5 @@
+- name: Ensure sudonp group exists
+  group: name=sudonp state=present
+
+- name: Add sudoers config for sudonp group
+  copy: dest=/etc/sudoers.d/sudonp src=sudonp mode=0440

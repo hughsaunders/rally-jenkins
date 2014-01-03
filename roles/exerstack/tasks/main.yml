@@ -1,0 +1,10 @@
+- name: Clone exerstack
+  git: repo="{{exerstack_repo_url}}" dest="/home/{{exerstack_user}}/exerstack"
+
+- name: chown exerstack checkout
+  shell: "chown -R {{exerstack_user}} /home/{{exerstack_user}}/exerstack"
+
+- name: run rally exerstack tests
+  shell: su {{exerstack_user}} -c  "cd /home/{{exerstack_user}}/exerstack; source ../devstack/openrc; ./exercise.sh {{openstack_release}} rally.sh"
+
+

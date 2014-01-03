@@ -1,0 +1,3 @@
+exerstack_user: stack
+openstack_release: havana
+exerstack_repo_url: https://github.com/rcbops/exerstack

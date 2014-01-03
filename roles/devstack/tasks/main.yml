@@ -1,0 +1,23 @@
+- name: Install git
+  apt: pkg=git state=present
+
+- name: Create stack user
+  user: name=stack createhome=yes home=/home/stack shell=/bin/bash groups=sudonp
+
+- name: Clone devstack
+  git: repo=https://github.com/openstack-dev/devstack.git dest=/home/stack/devstack
+
+- name: chown devstack checkout
+  shell: chown -R stack /home/stack/devstack
+
+- name: Create devstack localrc
+  template: src=localrc.j2 dest=/home/stack/devstack/localrc owner=stack
+
+- name: Run unstack.sh
+  shell: cd /home/stack/devstack && su stack -c './unstack.sh'
+
+- name: Run clean.sh
+  shell: cd /home/stack/devstack && su stack -c './clean.sh'
+
+- name: Run stack.sh
+  shell: cd /home/stack/devstack && su stack -c './stack.sh'
