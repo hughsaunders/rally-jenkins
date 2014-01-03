@@ -25,13 +25,13 @@
   shell: su {{rally_user}} -c "cd ~/rally; source .venv/bin/activate; openstack-rally deployment create --name dummy --filename dummy.json"
 
 - name: create instance flavor
-  shell: su {{rally_user}} -c "source ~/devstack/openrc admin; nova flavor-list |grep rally.small || nova flavor-create rally.small 10 256 15 1"
+  shell: su {{rally_user}} -c "source ~/devstack/openrc admin; nova flavor-list |grep rally.small || nova flavor-create rally.small 10 256 30 1"
 
 - name: download ubuntu image
-  shell: su {{rally_user}} -c "cd ~/rally; wget {{ubuntu_image_url}}" creates="/home/{{rally_user}}/rally/{{ubuntu_image_url|basename}}"
+  shell: su {{rally_user}} -c "cd ~/rally; wget --no-verbose {{ubuntu_image_url}}" creates="/home/{{rally_user}}/rally/{{ubuntu_image_url|basename}}"
 
 - name: add ubuntu image to glance
-  shell: su {{rally_user}} -c "cd ~/rally; source ../devstack/openrc admin; glance image-list |grep precise || glance image-create --name=precise --disk-format=qcow2 --container-format=ovf < {{ubuntu_image_url | basename}}"
+  shell: su {{rally_user}} -c "cd ~/rally; source ../devstack/openrc admin; glance image-list |grep precise || glance image-create --name=precise --disk-format=qcow2 --container-format=ovf --is-public=True < {{ubuntu_image_url | basename}}"
 
 - name: upload benchmark script
   copy: src=runsamples.sh dest="/home/{{rally_user}}/rally/runsamples.sh" mode=755
