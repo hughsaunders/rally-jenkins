@@ -1,18 +1,5 @@
-[chef]
-jenkins-chef
-
-[ceph]
-jenkins-ceph-1
-jenkins-ceph-2
-
-[openstack]
-jenkins-openstack
-
-[nonlocal:children]
-chef
-ceph
+[nonlocal]
 openstack
 
-[cluster:children]
-ceph
-openstack
+[misc]
+127.0.0.1 ansible_connection=local

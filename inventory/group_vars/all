@@ -1,8 +1,7 @@
-buildid: build-id-missing
+buildid: build_id_missing
 disk: /dev/xvde1
 flavor: performance1-4
 image: 80fbcb55-b206-41f9-9bc2-2dd7aac6c061
 keypair: junk
-network: roush
-network_prefix: 192.168.0
-region: DFW
+region: LON
+devstack_password: password
