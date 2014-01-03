@@ -13,7 +13,7 @@
   shell: "chown -R {{rally_user}} /home/{{rally_user}}/rally"
 
 - name: setup rally venv
-  shell: su {{rally_user}} -c "cd ~/rally; virtualenv .venv; source .venv/bin/activate; python setup.py install; pip install pbr"
+  shell: su {{rally_user}} -c "cd ~/rally; virtualenv .venv; source .venv/bin/activate; pip install .; pip install pbr"
 
 - name: create rally db
   shell: su {{rally_user}} -c "cd ~/rally; source .venv/bin/activate; openstack-rally-manage db recreate" creates="/home/{{rally_user}}/rally/.venv/lib/python2.7/site-packages/rally/openstack/common/db/rally.sqlite"
