@@ -24,7 +24,6 @@ run_playbook(){
 }
 # Run integration tests
 setup_ansible(){
-    git clone https://github.com/hughsaunders/rally-jenkins&
     pip install ansible pyrax rackspace-novaclient
     cp -r ~jenkins/jobscripts/* .
     sed -i -e 's+ansible_python_interpreter=+ansible_python_interpreter='$VIRTUAL_ENV/bin/python'+' inventory-local/hosts
