@@ -2,6 +2,7 @@
 git clone https://github.com/hughsaunders/rally-jenkins&
 virtualenv .venv
 source .venv/bin/activate
+pip install --upgrade setuptools
 
 # Run unit tests
 pip install .
