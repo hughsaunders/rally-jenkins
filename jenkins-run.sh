@@ -3,12 +3,13 @@ git clone https://github.com/hughsaunders/rally-jenkins&
 virtualenv .venv
 source .venv/bin/activate
 pip install --upgrade setuptools
+pip install --upgrade pip
 
 # Run unit tests
-pip install .
 pip install -r requirements.txt --allow-all-external --allow-unverified netaddr
 pip install -r "test-requirements.txt" --allow-all-external --allow-unverified netaddr
 pip install pbr tox
+pip install .
 tox
 
 # Run integration tests
