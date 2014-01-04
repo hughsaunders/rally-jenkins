@@ -1,0 +1,5 @@
+- name: create cinder loopback device
+  shell: losetup -f /opt/stack/data/stack-volumes-backing-file
+
+- name: start devstack screen session
+  shell: cd /home/stack/devstack && su stack -c 'screen -d -m -c stack-screenrc'
