@@ -1,9 +1,11 @@
 #!/bin/bash -xe
 cd /home/stack/devstack
+. functions;
 . .stackenv;
 . stackrc
-. functions;
 . lib/rpc_backend
+
+echo_summary(){ echo $@; }
 
 old_ip=$HOST_IP
 new_ip=$(ip a l dev eth0 |awk '/inet /{print $2}'|cut -d/ -f1)
@@ -15,7 +17,11 @@ done
 . openrc admin
 
 # Fix database
-msqldump -u stack --events -A|sed -e "s/$old_ip/$new_ip/g"|mysql -u stack
+cp ~stack/.my.cnf ~
+mysqldump --events -A|sed -e "s/$old_ip/$new_ip/g"|mysql
 
 # Fix rabbit
-cleanup_rpc_backend; install_rpc_backend; restart_rpc_backend
+cleanup_rpc_backend
+pkill -f rabbit
+install_rpc_backend
+restart_rpc_backend
