@@ -20,7 +20,8 @@ unit_tests(){
 
 run_playbook(){
     TAGS=$1
-    ansible-playbook bootstrap.yml -i inventory-local/ -e region=LON -e buildid="$BUILD_TAG" -e keypair=jenkins -vvvv --private-key=id_jenkins -t $TAGS
+    shift
+    ansible-playbook bootstrap.yml -i inventory-local/ -e region=LON -e buildid="$BUILD_TAG" -e keypair=jenkins -vvvv --private-key=id_jenkins -t $TAGS $@
 }
 # Run integration tests
 setup_ansible(){
