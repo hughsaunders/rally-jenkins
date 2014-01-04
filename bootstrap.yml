@@ -16,6 +16,11 @@
   roles:
     - { role: rally}
 
+- name: Retrieve logs
+  hosts: openstack
+  tags: rally
+  fetch: dest=logs src=/home/stack/devstack/logs flat=yes
+
 - name: Remove instances
   hosts: nonlocal
   tags: destroy

@@ -7,6 +7,9 @@
 - name: Clone devstack
   git: repo=https://github.com/openstack-dev/devstack.git dest=/home/stack/devstack
 
+- name: Create logs dir
+  file: path=/home/stack/devstack/logs state=directory owner=stack
+
 - name: chown devstack checkout
   shell: chown -R stack /home/stack/devstack
 
