@@ -18,7 +18,9 @@ done
 
 # Fix database
 cp ~stack/.my.cnf ~
-mysqldump --events -A|sed -e "s/$old_ip/$new_ip/g"|mysql
+
+mysqldump --events -A > dump.sql
+sed -e "s/$old_ip/$new_ip/g" <dump.sql |mysql
 
 # Fix rabbit
 cleanup_rpc_backend
