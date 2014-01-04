@@ -1,13 +1,8 @@
 #!/bin/bash -xe
 setup(){
     mkdir ../logs
-    virtualenv ../.venv
-    source ../.venv/bin/activate
     export PIP_ALLOW_EXTERNAL=netaddr
     export PIP_ALLOW_UNVERIFIED=netaddr
-
-    pip install --upgrade setuptools
-    pip install --upgrade pip
 }
 
 # Run unit tests
@@ -24,7 +19,10 @@ run_playbook(){
 }
 # Run integration tests
 setup_ansible(){
-    git clone https://github.com/hughsaunders/rally-jenkins&
+    virtualenv ../.venv
+    source ../.venv/bin/activate
+    pip install --upgrade setuptools
+    pip install --upgrade pip
     pip install ansible pyrax rackspace-novaclient
     cp -r ~jenkins/jobscripts/* .
     sed -i -e 's+ansible_python_interpreter=+ansible_python_interpreter='$VIRTUAL_ENV/bin/python'+' inventory-local/hosts
