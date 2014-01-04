@@ -1,14 +1,5 @@
-- name: Get new and old IPs
-  shell: source /home/stack/devstack/.stackenv; echo $HOST_IP>/tmp/old; ip a l dev eth0 |awk '/inet /{print $2}'|cut -d/ -f1 >/tmp/new
-
-- name: fix IPs in config files
-  shell: grep -rFl $(cat /tmp/old) /etc .stackenv |while read file; do sed -i -e 's/'$(cat /tmp/old)'/'$(cat /tmp/new)'/g' $file; done
-
-- name: fix IPs in databases
-  shell: su stack -c 'msqldump --events -A|sed -e "s/$(cat /tmp/old)/$(cat /tmp/new)/g"|mysql'
-
-- name: Reinstall and reconfigure rabbitmq due to host name change
-  shell: cd /home/stack/devstack; source stackrc; source openrc admin; source lib/rpc_backend; cleanup_rpc_backend; install_rpc_backend; restart_rpc_backend
+- name: Fix ip/hostname change related problems
+  script: fixhostname.sh
 
 - name: create cinder loopback device
   shell: losetup -f /opt/stack/data/stack-volumes-backing-file
