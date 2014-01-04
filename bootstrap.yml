@@ -6,10 +6,15 @@
     - { role: ensure-instance, state: "present" }
 
 - hosts: openstack
-  tags: deploy
+  tags: devstack
   roles:
     - { role: sudo }
     - { role: devstack }
+
+- hosts: openstack
+  tags: resumedevstack
+  roles:
+    - { role: resumedevstack }
 
 - hosts: openstack
   tags: rally
@@ -20,7 +25,9 @@
   hosts: openstack
   tags: rally
   tasks:
-    - fetch: dest=logs src=/home/stack/devstack/logs flat=yes
+    - shell: cd /home/stack/devstack/logs; tar cvzf /tmp/logs.tar.gz *
+    - fetch: dest=../logs/logs.tar.gz src=/tmp/logs.tar.gz flat=yes
+    - local_action: command tar xvzf ../logs/logs.tar.gz -C ../logs 
 
 - name: Remove instances
   hosts: nonlocal

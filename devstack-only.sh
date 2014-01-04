@@ -2,7 +2,7 @@
 source lib.sh
 setup
 setup_ansible
-run_playbook launch,deploy
+run_playbook launch,devstack
 
 # take image of instance post devstack, store uuid.
 source novarc
