@@ -6,8 +6,8 @@ pip install --upgrade setuptools
 
 # Run unit tests
 pip install .
-pip install -r requirements.txt
-pip install -r "test-requirements.txt"
+pip install -r requirements.txt --allow-all-external --allow-unverified netaddr
+pip install -r "test-requirements.txt" --allow-all-external --allow-unverified netaddr
 pip install pbr tox
 tox
 
