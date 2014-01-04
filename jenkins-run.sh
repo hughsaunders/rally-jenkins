@@ -7,7 +7,7 @@ source .venv/bin/activate
 pip install .
 pip install -r requirements.txt
 pip install -r "test-requirements.txt"
-pip install pbr tox testr
+pip install pbr tox
 tox
 
 # Run integration tests
