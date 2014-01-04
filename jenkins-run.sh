@@ -2,10 +2,9 @@
 git clone https://github.com/hughsaunders/rally-jenkins
 virtualenv .venv
 source .venv/bin/activate
-pip install ansible pyrax rackspace-novaclient
-pushd rally
+pip install .
 ./run_tests.sh
-popd
+pip install ansible pyrax rackspace-novaclient
 #wait
 cd rally-jenkins
 cp -r ~jenkins/jobscripts/* .
