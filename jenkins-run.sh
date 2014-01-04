@@ -9,6 +9,7 @@ pip install --upgrade setuptools
 pip install --upgrade pip
 
 # Run unit tests
+pip install --upgrade tox
 tox
 
 # Run integration tests
