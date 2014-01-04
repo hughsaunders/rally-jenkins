@@ -1,11 +1,17 @@
 #!/bin/bash -xe
-git clone https://github.com/hughsaunders/rally-jenkins
+git clone https://github.com/hughsaunders/rally-jenkins&
 virtualenv .venv
 source .venv/bin/activate
+
+# Run unit tests
 pip install .
-./run_tests.sh
+pip install -r requirements.txt
+pip install -r "test-requirements.txt"
+pip install pbr tox testr
+tox
+
+# Run integration tests
 pip install ansible pyrax rackspace-novaclient
-#wait
 cd rally-jenkins
 cp -r ~jenkins/jobscripts/* .
 sed -i -e 's+ansible_python_interpreter=+ansible_python_interpreter='$VIRTUAL_ENV/bin/python'+' inventory-local/hosts
