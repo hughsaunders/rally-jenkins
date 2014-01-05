@@ -5,6 +5,7 @@ setup(){
     source ../.venv/bin/activate
     export PIP_ALLOW_EXTERNAL=netaddr
     export PIP_ALLOW_UNVERIFIED=netaddr
+    export PYTHONUNBUFFERED=1
 
     pip install --upgrade setuptools
     pip install --upgrade pip
